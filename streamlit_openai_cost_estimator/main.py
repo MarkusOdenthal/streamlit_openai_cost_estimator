@@ -23,27 +23,11 @@ sidebar()
 # Input file upload for the PDF
 input_file = st.file_uploader("Upload your PDF here", type=["pdf"])
 
-# Slider to adjust the chunk size for text splitting
-chunk_size = st.slider("Refine the Chunksize?", 1, 4000, 4000)
-
-# Slider to adjust the overlap size for text splitting
-chunk_overlap = st.slider("Refine the Overlap Size?", 0, 1000, 800)
-
-# Numeric input for the price of Ada v2 Embedding per 1K tokens
-price_1k_token = st.number_input(
-    "Ada v2 Embedding $X / 1K tokens",
-    min_value=0.0,
-    max_value=1.0,
-    value=0.0001,
-    step=0.0001,
-    format="%f",
-)
-
 # Initialize the text splitter
 text_splitter = CharacterTextSplitter(
-    separator="\n",
-    chunk_size=chunk_size,
-    chunk_overlap=chunk_overlap,
+    separator=st.session_state["separator"],
+    chunk_size=st.session_state["chunk_size"],
+    chunk_overlap=st.session_state["chunk_overlap"],
     length_function=len,
 )
 
@@ -61,16 +45,32 @@ if input_file:
 
         # Calculate the total number of tokens in the PDF
         num_token = 0
+        page_number = []
+        page_num_char = []
+        pages_num_token = []
         for page in pages:
-            num_token += len(encoding.encode(page.page_content))
-        price = round(num_token / 1000 * price_1k_token, 6)
+            page_number.append(page.metadata["page"])
+            page_num_char.append(len(page.page_content))
+            page_num_token = len(encoding.encode(page.page_content))
+            pages_num_token.append(page_num_token)
+            num_token += page_num_token
+        price = round(num_token / 1000 * st.session_state["price_1k_token"], 6)
 
     # Create a new DataFrame to display the results
-    data = {"num_chunks": [len(pages)], "num_token": [num_token], "price": [price]}
-    df = pd.DataFrame(data)
+    df = pd.DataFrame(
+        {"num_chunks": [len(pages)], "num_token": [num_token], "price": [price]}
+    )
+    df_pages = pd.DataFrame(
+        {
+            "page_number": page_number,
+            "number_of_characters": page_num_char,
+            "number_of_token": pages_num_token,
+        }
+    )
 
     # Display the results
     st.success(f"Your results are ready!")
     st.dataframe(
         df.style.format({"price": "{:.6f}"}), use_container_width=True, hide_index=True
     )
+    st.dataframe(df_pages, use_container_width=True, hide_index=True)

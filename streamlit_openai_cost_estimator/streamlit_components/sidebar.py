@@ -7,7 +7,26 @@ def sidebar():
             "## Welcome to the OpenAI Cost Estimator Tool! 💲\n"
             "Estimate the cost of generating embeddings for your documents and optimize your project budget.\n"
         )
-        st.session_state["MODEL_TYP"] = "gpt-3.5-turbo"
+        st.session_state["chunk_size"] = st.slider(
+            "Refine the Chunksize?", 1, 4000, 4000
+        )
+        st.session_state["chunk_overlap"] = st.slider(
+            "Refine the Overlap Size?", 0, 1000, 800
+        )
+        st.session_state["separator"] = st.text_input(
+            "How should the text seperated?", value=r"\n"
+        )
+
+        # Numeric input for the price of Ada v2 Embedding per 1K tokens
+        current_pricing = 0.0001
+        st.session_state["price_1k_token"] = st.number_input(
+            f"Ada v2 Embedding ${current_pricing} / 1K tokens",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.0001,
+            step=current_pricing,
+            format="%f",
+        )
 
         st.markdown("---")
         st.markdown("# About")
