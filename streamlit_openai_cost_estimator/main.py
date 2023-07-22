@@ -4,7 +4,6 @@ import pandas as pd
 import streamlit as st
 import tiktoken
 from langchain.document_loaders import PyPDFLoader
-from langchain.text_splitter import CharacterTextSplitter
 
 from streamlit_openai_cost_estimator.streamlit_components.sidebar import sidebar
 
@@ -23,14 +22,6 @@ sidebar()
 # Input file upload for the PDF
 input_file = st.file_uploader("Upload your PDF here", type=["pdf"])
 
-# Initialize the text splitter
-text_splitter = CharacterTextSplitter(
-    separator=st.session_state["separator"],
-    chunk_size=st.session_state["chunk_size"],
-    chunk_overlap=st.session_state["chunk_overlap"],
-    length_function=len,
-)
-
 if input_file:
     # Calculate the token length and price
     with st.spinner(text="Calculating token length & price"):
@@ -41,7 +32,7 @@ if input_file:
 
         # Load the PDF using the PyPDFLoader
         loader = PyPDFLoader(temp_file_path)
-        pages = loader.load_and_split(text_splitter)
+        pages = loader.load_and_split(st.session_state["text_splitter"])
 
         # Calculate the total number of tokens in the PDF
         num_token = 0

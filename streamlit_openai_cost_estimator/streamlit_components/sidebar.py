@@ -1,4 +1,8 @@
 import streamlit as st
+from langchain.text_splitter import (
+    CharacterTextSplitter,
+    RecursiveCharacterTextSplitter,
+)
 
 
 def sidebar():
@@ -7,16 +11,39 @@ def sidebar():
             "## Welcome to the OpenAI Cost Estimator Tool! 💲\n"
             "Estimate the cost of generating embeddings for your documents and optimize your project budget.\n"
         )
-        st.session_state["chunk_size"] = st.slider(
-            "Refine the Chunksize?", 1, 4000, 4000
+        st.markdown("## Settings")
+        option = st.selectbox(
+            "Choose your Text Splitter",
+            ("Split by character", "Recursively split by character"),
         )
-        st.session_state["chunk_overlap"] = st.slider(
-            "Refine the Overlap Size?", 0, 1000, 800
-        )
-        st.session_state["separator"] = st.text_input(
-            "How should the text seperated?", value=r"\n"
-        )
+        if option == "Split by character":
+            st.write(
+                r'This is the simplest method. This splits based on characters (by default "\n") and measure '
+                r"chunk length by number of characters."
+            )
+        if option == "Recursively split by character":
+            st.write(
+                r'Recommended text splitter for generic content. It prioritizes keeping paragraphs, sentences, and words together to maintain semantic coherence. Default split characters: "\n\n", "\n", " ", "".'
+            )
+        st.markdown("---")
+        chunk_size = st.slider("Refine the Chunksize?", 1, 4000, 4000)
+        chunk_overlap = st.slider("Refine the Overlap Size?", 0, 1000, 800)
+        separator = st.text_input("How should the text seperated?", value=r"\n")
 
+        if option == "Split by character":
+            # Initialize the text splitter
+            st.session_state["text_splitter"] = CharacterTextSplitter(
+                separator=separator,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                length_function=len,
+            )
+        if option == "Recursively split by character":
+            st.session_state["text_splitter"] = RecursiveCharacterTextSplitter(
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                length_function=len,
+            )
         # Numeric input for the price of Ada v2 Embedding per 1K tokens
         current_pricing = 0.0001
         st.session_state["price_1k_token"] = st.number_input(
